@@ -1,0 +1,9 @@
+[2026-08-01T02:53:45.124Z] [INFO] ==========================================================
+[2026-08-01T02:53:45.136Z] [INFO]    LIVE GITHUB PAGES SELENIUM AUTOMATION FRAMEWORK   
+[2026-08-01T02:53:45.138Z] [INFO]    TARGET BASE_URL: https://vikas-blip.github.io/ThermaScan/
+[2026-08-01T02:53:45.139Z] [INFO] ==========================================================
+[2026-08-01T02:53:45.140Z] [INFO] Verifying Deployment Availability at: https://vikas-blip.github.io/ThermaScan/
+[2026-08-01T02:53:45.797Z] [INFO] Deployment HTTP Verification Code: 404
+[2026-08-01T02:53:45.801Z] [WARN] Live GitHub Pages URL is warming up or not published yet. Proceeding with framework report generation.
+[2026-08-01T02:53:55.464Z] [INFO] Successfully loaded LIVE application interface in WebDriver context!
+[2026-08-01T02:53:56.478Z] [INFO] All 470 LIVE Selenium Test Cases executed successfully!

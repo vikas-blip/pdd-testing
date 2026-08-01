@@ -1,0 +1,7 @@
+[2026-07-23T13:10:31.560Z] [INFO] ==========================================================
+[2026-07-23T13:10:31.565Z] [INFO]    LIVE GITHUB PAGES SELENIUM AUTOMATION FRAMEWORK   
+[2026-07-23T13:10:31.567Z] [INFO]    TARGET BASE_URL: https://vikas-blip.github.io/ThermaScan/
+[2026-07-23T13:10:31.568Z] [INFO] ==========================================================
+[2026-07-23T13:10:31.569Z] [INFO] Verifying Deployment Availability at: https://vikas-blip.github.io/ThermaScan/
+[2026-07-23T13:10:32.011Z] [INFO] Deployment HTTP Verification Code: 404
+[2026-07-23T13:10:32.013Z] [ERROR] LIVE Deployment Verification Failed! Marking pipeline failed.
