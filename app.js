@@ -50,22 +50,36 @@ window.startRealtimeCloudSync = function(username) {
     try { activeFirestoreUnsubscribe(); } catch(e){}
   }
 
-  console.log(`🔥 Subscribing to Firestore document: users/${docId}`);
+  console.log("🔥 [ThermaScan Sync Diagnostic] Project ID:", window.thermascanFirebaseConfig.projectId);
+  console.log("🔒 [ThermaScan Sync Diagnostic] Auth User UID:", cloudAuth && cloudAuth.currentUser ? cloudAuth.currentUser.uid : "Anonymous");
+  console.log(`📡 [ThermaScan Sync Diagnostic] Listening to path: users/${docId}`);
 
   activeFirestoreUnsubscribe = cloudDb.collection("users").doc(docId).onSnapshot((doc) => {
+    console.log(`⚡ [ThermaScan Sync Diagnostic] Snapshot received for users/${docId}! Exists: ${doc.exists}`);
     if (doc.exists) {
       const data = doc.data();
+      console.log(`📊 [ThermaScan Sync Diagnostic] Document Data for users/${docId}:`, data);
       let updated = false;
 
-      // 1. Sync Medicines Inventory
-      if (data && Array.isArray(data.inventory)) {
-        inventory = data.inventory.map(item => {
+      // Extract medicine array or object from data.inventory, data.medicines, or data.meds
+      let rawMeds = data.inventory || data.medicines || data.meds || null;
+      let medArray = [];
+      if (Array.isArray(rawMeds)) {
+        medArray = rawMeds;
+      } else if (rawMeds && typeof rawMeds === 'object') {
+        medArray = Object.values(rawMeds);
+      }
+
+      if (medArray.length >= 0) {
+        inventory = medArray.map(item => {
           if (!item.owner) item.owner = activeUser;
           return item;
         });
         localStorage.setItem('thermascan_inventory', JSON.stringify(inventory));
         if (typeof renderInventory === 'function') renderInventory();
         if (typeof updateDashboard === 'function') updateDashboard();
+        if (typeof renderAlertsCenter === 'function') renderAlertsCenter();
+        if (typeof renderRefillHub === 'function') renderRefillHub();
         updated = true;
       }
 
@@ -90,13 +104,14 @@ window.startRealtimeCloudSync = function(username) {
       }
 
       if (updated) {
-        console.log(`☁️ Live Firestore update received for users/${docId}!`);
+        console.log(`✅ [ThermaScan Sync Diagnostic] Live UI Auto-Updated for users/${docId}`);
       }
     } else {
+      console.log(`⚠️ Document users/${docId} does not exist yet. Initializing...`);
       window.syncToCloud();
     }
   }, (err) => {
-    console.warn("Cloud Firestore listener notice:", err);
+    console.error("🚨 [ThermaScan Sync Diagnostic Error] Firestore listener error:", err);
   });
 };
 
