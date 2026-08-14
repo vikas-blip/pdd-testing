@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ThermaScan">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ThermaScan">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ThermaScan">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>ThermaScan</title>
+  
+  <meta name="description" content="ThermaScan - Medicine expiry and temperature tracking app.">
+  <meta name="theme-color" content="#0f172a">
+  
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css?v=20260814_v50">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Firebase Cloud Sync SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    window.addEventListener('error', function(e) {
+      var errEl = document.createElement('div');
+      errEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;padding:20px;z-index:99999;font-family:monospace;white-space:pre-wrap;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.5);max-height:50vh;overflow-y:auto;';
+      errEl.innerHTML = '<strong>🚨 [ThermaScan diagnostic error] 🚨</strong><br>' + 
+        e.message + '<br>File: ' + e.filename + '<br>Line: ' + e.lineno + ' | Col: ' + e.colno + 
+        '<br><br>Stack Trace:<br>' + (e.error ? e.error.stack : 'No stack trace');
+      document.body.appendChild(errEl);
+    });
+  </script>
+</head>
+<body class="dark-theme">
+  <div class="bg-blobs"></div>
+
+  <div class="app-container">
+    <header id="main-header" style="display: flex;">
+      <h1>ThermaScan <i class="fa-solid fa-temperature-half"></i></h1>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-secondary nav-btn" data-target="view-settings" style="padding: 8px 12px; width: auto;">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+        <button id="btn-logout" class="btn btn-secondary" style="display: none; padding: 8px 12px; width: auto; font-size: 14px;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <div id="back-nav" style="display: none; margin-bottom: 20px;">
+      <button class="btn btn-secondary nav-btn" data-target="view-dashboard" style="width: auto; padding: 10px 16px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </button>
+    </div>
+
+    <!-- Auth View -->
+    <main id="view-auth" class="view active">
+      <div class="glass-card auth-card text-center" style="margin-top: 50px; padding: 0;">
+        <div style="padding: 30px 20px 20px;">
+          <h1 style="font-size: 36px; margin-bottom: 10px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ThermaScan</h1>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">Your personal medicine tracker</p>
+        </div>
+        
+        <div class="auth-tabs">
+          <div class="auth-tab active" id="tab-login">Login</div>
+          <div class="auth-tab" id="tab-signup">Sign Up</div>
+        </div>
+
+        <div style="padding: 20px 30px 30px;">
+          <form id="form-auth" onsubmit="event.preventDefault(); handleLoginSubmit(event); return false;">
+            <div class="input-group">
+              <input type="text" id="auth-username" placeholder="Username or Email" required>
+            </div>
+            
+            <!-- Email Address shown in Sign Up mode -->
+            <div class="input-group" id="auth-email-group" style="display: none;">
+              <input type="email" id="auth-email" placeholder="Email Address (e.g. user@gmail.com)">
+              <div style="font-size: 11px; color: var(--text-secondary); text-align: left; margin-top: 4px;">* Login confirmation email will be sent here.</div>
+            </div>
+
+            <!-- Phone Number is explicitly shown in Sign Up mode -->
+            <div class="input-group" id="auth-phone-group" style="display: none;">
+              <input type="tel" id="auth-phone" placeholder="Phone Number (digits only)" maxlength="10">
+              <div style="font-size: 11px; color: var(--text-secondary); text-align: left; margin-top: 4px;">* Phone number (digits only).</div>
+            </div>
+            
+            <div class="input-group">
+              <input type="password" id="auth-password" placeholder="Password" required>
+            </div>
+            <button type="button" class="btn mt-4" id="btn-auth-action" onclick="handleLoginSubmit(event)">Login</button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <!-- Dashboard View -->
+    <main id="view-dashboard" class="view">
+      <!-- Health Tip Widget -->
+      <div id="health-tip-widget" class="alert alert-success" style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-lightbulb" style="font-size: 20px;"></i>
+        <div style="flex: 1;">
+          <strong>Health Tip:</strong> <span id="daily-health-tip">Loading tip...</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 24px;">Hello, <span id="dash-username" style="color: var(--primary-color);">User</span>!</h2>
+        <p style="color: var(--text-secondary);">Here is your overview for today.</p>
+      </div>
+
+      <!-- Dashboard Grid -->
+      <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+        <div class="dash-card nav-btn" data-target="view-scanner">
+          <div class="dash-icon" style="background: rgba(14, 165, 233, 0.2); color: var(--primary-color);"><i class="fa-solid fa-circle-plus"></i></div>
+          <h3>Add Medicine</h3>
+        </div>
+        
+        <div class="dash-card nav-btn" data-target="view-inventory">
+          <div class="dash-icon" style="background: rgba(139, 92, 246, 0.2); color: var(--secondary-color);"><i class="fa-solid fa-box-open"></i></div>
+          <h3>View Inventory</h3>
+        </div>
+
+        <div class="dash-card" id="btn-dash-bmi-calc" onclick="openBmiModal()">
+          <div class="dash-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);"><i class="fa-solid fa-weight-scale"></i></div>
+          <h3>BMI Calculator</h3>
+        </div>
+
+        <div class="dash-card" id="btn-dash-first-aid" onclick="openFirstAidModal()">
+          <div class="dash-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;"><i class="fa-solid fa-kit-medical"></i></div>
+          <h3>First Aid Guide</h3>
+        </div>
+
+        <div class="dash-card" id="btn-nearby-pharmacy">
+          <div class="dash-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;"><i class="fa-solid fa-store"></i></div>
+          <h3>24/7 Pharmacies</h3>
+        </div>
+      </div>
+
+      <!-- Analytics and Checklist -->
+      <div class="flex-row mt-4" style="flex-wrap: wrap;">
+        
+        <!-- Recent Activity Log -->
+        <div class="glass-card flex-1" style="min-width: 250px;">
+          <h3 style="margin-bottom: 10px; font-size: 16px;"><i class="fa-solid fa-clock-rotate-left"></i> Recently Added</h3>
+          <div id="recent-activity-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Phase 11: Latest Vitals -->
+        <div class="glass-card flex-1" style="min-width: 250px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="font-size: 16px; margin: 0;"><i class="fa-solid fa-heart-pulse" style="color: #ef4444;"></i> Latest Vitals</h3>
+            <button id="btn-log-vitals" onclick="openVitalsModal()" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px; width: auto; border-radius: 8px;">Log Vitals</button>
+          </div>
+          <div id="vitals-display-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="empty-state" style="padding: 10px;"><p style="font-size:12px;">No vitals logged yet.</p></div>
+          </div>
+        </div>
+
+        <!-- 7-Day Adherence Tracker -->
+        <div class="glass-card flex-1" style="min-width: 250px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="font-size: 16px;"><i class="fa-solid fa-calendar-check" style="color: var(--success);"></i> Adherence</h3>
+            <div id="health-streak-badge" style="font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 20px; background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid #f59e0b;">
+              🔥 Streak: 0 Days
+            </div>
+          </div>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Tap today to log your medication.</p>
+          <div class="adherence-strip" id="adherence-strip">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Add Medicine View -->
+    <main id="view-scanner" class="view">
+      <!-- Smart Dose Scheduler UI Card -->
+      <div class="glass-card" id="scheduler-container" style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 10px;"><i class="fa-solid fa-clock" style="color: var(--primary-color);"></i> Smart Dose Scheduler & Reminders</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Configure custom intake slots, trigger automated dosage reminders, and calculate refill schedules.</p>
+        
+        <div class="flex-row" style="gap: 10px; margin-bottom: 15px;">
+          <div class="input-group flex-1" style="margin-bottom: 0;">
+            <label style="font-size: 12px;">Preferred Dose Time Slot</label>
+            <select id="select-time-slot" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--glass-border);">
+              <option value="Morning (08:00 AM)">Morning (08:00 AM)</option>
+              <option value="Afternoon (01:00 PM)">Afternoon (01:00 PM)</option>
+              <option value="Evening (07:00 PM)">Evening (07:00 PM)</option>
+              <option value="Night (10:00 PM)">Night (10:00 PM)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex-row">
+          <button type="button" class="btn flex-1" id="btn-set-schedule" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-calendar-plus"></i> Auto-Schedule Med
+          </button>
+          <button type="button" class="btn btn-secondary flex-1" id="btn-trigger-alarm" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-bell" style="color: var(--warning);"></i> Test Dose Alarm
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Pre-fill Selection -->
+      <div class="glass-card">
+        <h2 style="margin-bottom: 10px;"><i class="fa-solid fa-bolt" style="color: var(--warning);"></i> Quick Select Medicine</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">Click any medicine below to instantly pre-fill all clinical information & safe storage temperature bounds.</p>
+        
+        <div class="quick-select-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="paracetamol" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-pills" style="color: var(--primary-color);"></i> Paracetamol 500mg
+          </button>
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="insulin" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-syringe" style="color: var(--secondary-color);"></i> Insulin Glargine
+          </button>
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="ibuprofen" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-capsules" style="color: var(--danger);"></i> Ibuprofen 400mg
+          </button>
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="aspirin" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-pills" style="color: var(--success);"></i> Aspirin 75mg
+          </button>
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="amoxicillin" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-capsules" style="color: var(--primary-color);"></i> Amoxicillin 250mg
+          </button>
+          <button type="button" class="btn btn-secondary quick-select-btn" data-med="metformin" style="padding: 12px; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px; border-radius: 12px; width: 100%;">
+            <i class="fa-solid fa-tablets" style="color: var(--warning);"></i> Metformin 500mg
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card" id="medicine-form" style="display: block;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <h2 style="margin-bottom: 5px;" id="med-name">Medicine Details</h2>
+          <div style="display: flex; gap: 8px;">
+             <button id="btn-speak-med" class="btn btn-secondary" style="padding: 8px; width: 35px; border-radius: 50%;" title="Speak Details"><i class="fa-solid fa-volume-high"></i></button>
+          </div>
+        </div>
+        
+        <p class="mb-4" id="med-uses" style="color: var(--primary-color); font-weight: 600; font-size: 13px;">Uses: Select a quick medicine or fill details below.</p>
+        
+        <div class="alert alert-warning mb-4" id="temp-alert-info" style="display: none;">
+          <i class="fa-solid fa-temperature-arrow-down"></i>
+          <div>
+            <strong>Required Storage:</strong> <span id="med-req-temp">15°C - 30°C</span>
+          </div>
+        </div>
+
+        <form id="form-save-med">
+          <input type="hidden" id="input-barcode">
+          
+          <div class="input-group">
+            <label>Medicine Name</label>
+            <input type="text" id="input-med-name" required placeholder="e.g. Paracetamol">
+          </div>
+          
+          <div class="input-group">
+            <label>Uses</label>
+            <input type="text" id="input-med-uses" required placeholder="e.g. Pain relief, fever">
+          </div>
+          
+          <div class="flex-row">
+            <div class="input-group flex-1">
+              <label>Mfg Date</label>
+              <input type="date" id="input-mfg" required>
+            </div>
+            <div class="input-group flex-1">
+              <label>Expiry Date</label>
+              <input type="date" id="input-exp" required>
+            </div>
+          </div>
+          
+          <div class="input-group">
+            <label>Current Storage Temp (°C)</label>
+            <input type="number" id="input-current-temp" step="0.1" placeholder="e.g. 20" required>
+          </div>
+
+          <div class="flex-row">
+            <div class="input-group flex-1">
+              <label>Total Pills in Box</label>
+              <input type="number" id="input-total-pills" min="1" placeholder="e.g. 30" required>
+            </div>
+            <div class="input-group flex-1">
+              <label>Daily Dosage</label>
+              <input type="number" id="input-daily-dosage" min="1" step="0.5" placeholder="e.g. 2" required>
+            </div>
+          </div>
+          
+          <div id="temp-gauge-container" class="mt-4" style="display: none;">
+              <div class="temp-gauge">
+                <div class="temp-bar cold"></div>
+                <div class="temp-bar optimal"></div>
+                <div class="temp-bar hot"></div>
+                <div class="temp-marker" id="temp-marker"></div>
+              </div>
+              <div id="temp-gauge-label" class="text-center mt-2" style="font-weight: 600; font-size: 14px;"></div>
+            </div>
+          
+          <div class="flex-row mt-4">
+            <button type="button" class="btn btn-secondary flex-1" id="btn-cancel-scan">Cancel</button>
+            <button type="submit" class="btn flex-1">Save Medicine</button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- Inventory View -->
+    <main id="view-inventory" class="view">
+      <div class="glass-card">
+        <h2 style="margin-bottom: 15px;">Your Medicines</h2>
+        <div class="flex-row mb-4">
+          <div class="input-group flex-1">
+            <input type="text" id="search-inventory" placeholder="Search medicines...">
+          </div>
+        </div>
+        <div id="inventory-list"></div>
+      </div>
+    </main>
+
+    <!-- Settings View -->
+    <main id="view-settings" class="view">
+      <div class="glass-card">
+        <h2 style="margin-bottom: 20px;"><i class="fa-solid fa-gear"></i> Settings</h2>
+        
+        <!-- Profile Info -->
+        <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary-color);">Account Profile</h3>
+          <div style="font-size: 14px;"><strong>Username:</strong> <span id="setting-username"></span></div>
+          <div style="font-size: 14px; margin-top: 5px;"><strong>Phone:</strong> <span id="setting-phone"></span></div>
+          <div style="font-size: 14px; margin-top: 5px;"><strong>Email:</strong> <span id="setting-email">N/A</span></div>
+        </div>
+
+        <!-- Preferences -->
+        <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary-color);">Preferences</h3>
+          
+          <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-weight: 600; font-size: 14px;">Theme (Dark Mode)</div>
+            <label class="theme-switch">
+              <input type="checkbox" id="theme-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-weight: 600; font-size: 14px;">Large Text Mode</div>
+            <label class="theme-switch">
+              <input type="checkbox" id="pref-large-text">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-weight: 600; font-size: 14px;">Daily Dosage Reminders</div>
+            <label class="theme-switch">
+              <input type="checkbox" id="pref-intake-reminders" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="input-group" style="flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-weight: 600; font-size: 14px;">Storage Temp Safety Warnings</div>
+            <label class="theme-switch">
+              <input type="checkbox" id="pref-temp-warnings" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Daily Hydration & Water Tracker -->
+        <div style="margin-top: 15px;">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--primary-color);">
+            <i class="fa-solid fa-droplet" style="color: #38bdf8;"></i> Daily Hydration Tracker
+          </h3>
+          <div style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Today's Hydration Goal (2,000 ml)</div>
+                <div style="font-size: 24px; font-weight: 800; color: #38bdf8; margin-top: 2px;">
+                  <span id="water-current-ml">0</span> <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">/ 2000 ml</span>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <span id="water-percent-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">0% Goal</span>
+                <div id="water-glasses-count" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">🥤 0 glasses logged</div>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; margin-bottom: 14px;">
+              <div id="water-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #0284c7); border-radius: 5px; transition: width 0.4s ease;"></div>
+            </div>
+
+            <!-- Quick Log Buttons -->
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-add-water-250" class="btn" style="flex: 1; padding: 9px; font-size: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none;">
+                <i class="fa-solid fa-glass-water"></i> +250 ml Glass
+              </button>
+              <button id="btn-add-water-500" class="btn" style="flex: 1; padding: 9px; font-size: 12px; background: linear-gradient(135deg, #0369a1, #075985); border: none;">
+                <i class="fa-solid fa-bottle-water"></i> +500 ml Bottle
+              </button>
+              <button id="btn-reset-water" class="btn btn-secondary" style="padding: 9px 12px; font-size: 12px;" title="Reset today's count">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Health Vitals Tracker Modal -->
+    <div id="vitals-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 400px;">
+        <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-heart-pulse" style="color: #ef4444;"></i> Log Vitals</h2>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Log your vitals regularly to keep a historical record for your doctor.</p>
+        
+        <div class="input-group">
+          <label>Blood Pressure (SYS/DIA)</label>
+          <input type="text" id="input-bp" placeholder="e.g. 120/80">
+        </div>
+        
+        <div class="input-group">
+          <label>Heart Rate (BPM)</label>
+          <input type="number" id="input-hr" placeholder="e.g. 72">
+        </div>
+        
+        <div class="input-group">
+          <label>Blood Sugar (mg/dL)</label>
+          <input type="number" id="input-sugar" placeholder="e.g. 95">
+        </div>
+        
+        <div class="flex-row mt-4">
+          <button type="button" class="btn btn-secondary flex-1" id="btn-close-vitals">Close</button>
+          <button type="button" class="btn flex-1" id="btn-submit-vitals" style="background: #ef4444;">Save Vitals <i class="fa-solid fa-floppy-disk"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Express Pill Refill Hub Modal (Swiggy/Zomato Style 1-Tap Refill) -->
+    <div id="express-refill-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0;"><i class="fa-solid fa-bolt" style="color: var(--warning);"></i> Express Pill Refill Hub</h2>
+          <button id="btn-close-refill" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">1-Tap express pill re-order & instant inventory replenishment.</p>
+        
+        <div id="refill-list-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <!-- Populated by app.js -->
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-refill-modal-footer">Close Hub</button>
+      </div>
+    </div>
+
+    <!-- 24/7 Emergency Pharmacies Modal -->
+    <div id="pharmacy-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h2 style="font-size: 20px; margin: 0;"><i class="fa-solid fa-store" style="color: #ef4444;"></i> 24/7 Live Pharmacies</h2>
+          <button id="btn-close-pharmacy" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        
+        <!-- Live Location Status Bar & GPS Request Button -->
+        <button id="btn-request-gps" class="btn" style="width: 100%; margin-bottom: 12px; font-weight: 700; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-crosshairs"></i> Tap to Allow & Detect My Live GPS Location
+        </button>
+
+        <div id="location-status-bar" style="font-size: 12px; color: var(--text-secondary); background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <span><i class="fa-solid fa-location-crosshairs" style="color: var(--primary-color);"></i> <span id="current-location-text">Tap button above to access GPS...</span></span>
+          <button id="btn-refresh-location" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 11px;"><i class="fa-solid fa-arrows-rotate"></i> Re-Scan</button>
+        </div>
+
+        <div id="pharmacy-list-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
+          <!-- Dynamically populated via Live Device GPS -->
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-pharmacy-modal-footer">Close</button>
+      </div>
+    </div>
+
+    <!-- 24/7 Emergency SOS Helpline Modal -->
+    <div id="sos-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: #ef4444;"><i class="fa-solid fa-phone-volume"></i> Emergency SOS Contacts</h2>
+          <button id="btn-close-sos" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Immediate 24/7 emergency medical helplines & ambulance assistance.</p>
+        
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <a href="tel:108" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); padding: 12px 16px; border-radius: 12px;">
+            <div>
+              <div style="font-weight: 700; color: #ef4444; font-size: 15px;">🚑 108 Emergency Ambulance</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">National Toll-Free Medical Emergency</div>
+            </div>
+            <span class="btn" style="background: #ef4444; width: auto; padding: 6px 12px; font-size: 12px;">Call 108</span>
+          </a>
+
+          <a href="tel:1800116117" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 12px 16px; border-radius: 12px;">
+            <div>
+              <div style="font-weight: 700; color: #f59e0b; font-size: 15px;">🧪 Poison Control Center</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">AIIMS Poison Information Hotline</div>
+            </div>
+            <span class="btn" style="background: #f59e0b; width: auto; padding: 6px 12px; font-size: 12px;">Call Help</span>
+          </a>
+
+          <a href="tel:14416" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.4); padding: 12px 16px; border-radius: 12px;">
+            <div>
+              <div style="font-weight: 700; color: var(--primary-color); font-size: 15px;">📞 Tele-MANAS Health Line</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">24/7 Mental & General Health Line (14416)</div>
+            </div>
+            <span class="btn" style="background: var(--primary-color); width: auto; padding: 6px 12px; font-size: 12px;">Call Now</span>
+          </a>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-sos-footer">Close SOS</button>
+      </div>
+    </div>
+
+    <div id="ai-loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 3000; align-items: center; justify-content: center; flex-direction: column; gap: 20px; backdrop-filter: blur(10px);">
+      <div style="position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 60px; color: var(--primary-color);"></i>
+        <i class="fa-solid fa-microscope" style="position: absolute; font-size: 24px; color: var(--secondary-color);"></i>
+      </div>
+      <h3 style="color: var(--text-primary); font-size: 20px; margin-top: 10px;">🤖 ThermaScan AI Vision</h3>
+      <p id="ai-loading-status" style="color: var(--text-secondary); font-size: 14px; font-weight: 500;">Initializing OCR Brain...</p>
+    </div>
+
+    <!-- Thermal Cold-Chain Storage Safety Modal -->
+    <div id="thermal-check-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: #06b6d4;"><i class="fa-solid fa-temperature-arrow-down"></i> Thermal Storage Safety Check</h2>
+          <button id="btn-close-thermal" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Evaluate temperature tolerance and storage limits for cold-chain medications.</p>
+        
+        <div class="input-group">
+          <label>Select Medication Type</label>
+          <select id="thermal-med-select" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--glass-border);">
+            <option value="insulin">Insulin Glargine (2°C – 8°C Cold Chain)</option>
+            <option value="amoxicillin">Amoxicillin Liquid Suspension (15°C – 25°C)</option>
+            <option value="eyedrops">Sterile Eye Drops (15°C – 25°C Cool Storage)</option>
+            <option value="paracetamol">Paracetamol Tablets (15°C – 30°C Room Temp)</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>Current Ambient / Refrigerator Temp (°C)</label>
+          <input type="number" id="thermal-temp-input" placeholder="e.g. 5" value="5" step="0.5">
+        </div>
+
+        <button type="button" class="btn" id="btn-run-thermal-eval" style="margin-bottom: 15px; background: linear-gradient(135deg, #06b6d4, #0284c7);">Check Storage Safety</button>
+
+        <div id="thermal-eval-result" style="display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px;">
+          <!-- Dynamically populated via app.js -->
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-thermal-footer">Close Thermal Check</button>
+      </div>
+    </div>
+
+    <!-- Drug-Drug Interaction Safety Matrix Modal -->
+    <div id="drug-matrix-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: var(--secondary-color);"><i class="fa-solid fa-shield-virus"></i> Drug Safety Matrix</h2>
+          <button id="btn-close-matrix" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Cross-check multi-drug prescription compatibility to prevent adverse reactions.</p>
+        
+        <div class="flex-row" style="gap: 10px; margin-bottom: 10px;">
+          <div class="input-group flex-1">
+            <label style="font-size: 12px;">First Medicine</label>
+            <select id="matrix-med-1" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--glass-border);">
+              <option value="aspirin">Aspirin 75mg</option>
+              <option value="ibuprofen">Ibuprofen 400mg</option>
+              <option value="paracetamol">Paracetamol 500mg</option>
+              <option value="metformin">Metformin 500mg</option>
+            </select>
+          </div>
+          <div class="input-group flex-1">
+            <label style="font-size: 12px;">Second Medicine</label>
+            <select id="matrix-med-2" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--glass-border);">
+              <option value="ibuprofen">Ibuprofen 400mg</option>
+              <option value="aspirin">Aspirin 75mg</option>
+              <option value="paracetamol">Paracetamol 500mg</option>
+              <option value="metformin">Metformin 500mg</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="button" class="btn" id="btn-run-matrix-eval" style="margin-bottom: 15px; background: linear-gradient(135deg, var(--secondary-color), #7c3aed);">Evaluate Combination</button>
+
+        <div id="matrix-eval-result" style="display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px;">
+          <!-- Dynamically populated via app.js -->
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-matrix-footer">Close Matrix</button>
+      </div>
+    </div>
+
+    <!-- Medication Safety & Storage Guide Modal -->
+    <div id="safety-guide-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: var(--primary-color);"><i class="fa-solid fa-book-medical"></i> Medication Safety Guide</h2>
+          <button id="btn-close-guide" class="btn btn-secondary" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; font-size: 13px;">
+          <div style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 12px; border-radius: 10px;">
+            <strong style="color: var(--primary-color);">1. 🌡️ Temperature Storage Rules</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; font-size: 12px;">Store Insulin & Biologics in refrigerator (2°C–8°C). Never freeze medications.</p>
+          </div>
+
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 12px; border-radius: 10px;">
+            <strong style="color: #f59e0b;">2. ⏰ Consistent Dosage Timing</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; font-size: 12px;">Take daily doses at the same time each day for maximum therapeutic efficacy.</p>
+          </div>
+
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 10px;">
+            <strong style="color: #ef4444;">3. 🚫 Expiry Check</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; font-size: 12px;">Discard any expired pills or opened liquid suspensions past 14 days.</p>
+          </div>
+
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 10px;">
+            <strong style="color: var(--success);">4. 💧 Hydration & Administration</strong>
+            <p style="color: var(--text-secondary); margin-top: 4px; font-size: 12px;">Swallow tablets with a full glass of water. Avoid taking meds with alcohol or grapefruit juice.</p>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-guide-footer">Close Guide</button>
+      </div>
+    </div>
+
+    <!-- BMI & Health Metrics Calculator Modal -->
+    <div id="bmi-calc-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: var(--success);"><i class="fa-solid fa-weight-scale"></i> Body Mass Index (BMI)</h2>
+          <button id="btn-close-bmi" class="btn btn-secondary" onclick="closeBmiModal()" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Calculate your body mass index and ideal health weight range.</p>
+        
+        <div class="input-group">
+          <label>Height (in cm)</label>
+          <input type="number" id="bmi-height-input" placeholder="e.g. 170" value="170" min="50" max="250">
+        </div>
+
+        <div class="input-group">
+          <label>Weight (in kg)</label>
+          <input type="number" id="bmi-weight-input" placeholder="e.g. 70" value="70" min="20" max="300">
+        </div>
+
+        <button type="button" class="btn" id="btn-run-bmi" style="margin-bottom: 15px; background: linear-gradient(135deg, var(--success), #16a34a);">Calculate BMI Score</button>
+
+        <div id="bmi-result" style="display: none; padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 15px;">
+          <!-- Populated by app.js -->
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-bmi-footer" onclick="closeBmiModal()">Close</button>
+      </div>
+    </div>
+
+    <!-- First Aid Guide Modal -->
+    <div id="first-aid-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div class="glass-card" style="width: 90%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="font-size: 20px; margin: 0; color: #ef4444;"><i class="fa-solid fa-kit-medical"></i> Quick First Aid Guide</h2>
+          <button id="btn-close-first-aid" class="btn btn-secondary" onclick="closeFirstAidModal()" style="width: auto; padding: 6px 12px; border-radius: 50%;">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Essential emergency care steps for home medical safety.</p>
+        
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 12px;">
+            <strong style="color: #ef4444; font-size: 14px;">🔥 Thermal Burns</strong>
+            <p style="font-size: 12px; color: var(--text-primary); margin-top: 4px; margin-bottom: 0;">Cool with running tap water for 10-15 minutes. Do not apply ice directly to burned skin.</p>
+          </div>
+
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 12px; border-radius: 12px;">
+            <strong style="color: #f59e0b; font-size: 14px;">🩸 Cuts & Bleeding</strong>
+            <p style="font-size: 12px; color: var(--text-primary); margin-top: 4px; margin-bottom: 0;">Apply firm, direct pressure using a clean cloth. Elevate injured area above heart level.</p>
+          </div>
+
+          <div style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 12px; border-radius: 12px;">
+            <strong style="color: var(--primary-color); font-size: 14px;">🌡️ High Fever Care</strong>
+            <p style="font-size: 12px; color: var(--text-primary); margin-top: 4px; margin-bottom: 0;">Stay hydrated with fluids, rest in a cool room, and monitor body temperature regularly.</p>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btn-close-first-aid-footer" onclick="closeFirstAidModal()">Close Guide</button>
+      </div>
+    </div>
+
+    <!-- Alerts Container for Toast Notifications -->
+    <div id="alerts-container"></div>
+
+    <script src="app.js?v=20260814_v50"></script>
+  </div>
+</body>
+</html>

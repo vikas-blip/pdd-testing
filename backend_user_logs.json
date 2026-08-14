@@ -1,0 +1,18 @@
+{
+  "app": "ThermaScan Health Tracker",
+  "database": "Browser LocalStorage / Persistent DB",
+  "exportedAt": "2026-07-24T12:18:33.782Z",
+  "registeredUsers": {
+    "TESTUSER": "password123",
+    "VIKAS": "vikas123"
+  },
+  "userLoginLogs": [
+    {
+      "id": "1784895513698",
+      "username": "TESTUSER",
+      "date": "Jul 24, 2026",
+      "time": "05:48:33 PM",
+      "timestamp": "2026-07-24T12:18:33.779Z"
+    }
+  ]
+}
