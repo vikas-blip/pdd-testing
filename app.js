@@ -40,26 +40,43 @@ function initFirebaseSync() {
   }
 }
 
+window.stopRealtimeCloudSync = function() {
+  if (activeFirestoreUnsubscribe) {
+    try {
+      activeFirestoreUnsubscribe();
+      console.log("📡 [ThermaScan Realtime Sync] Firestore realtime listener stopped/cleaned up");
+    } catch(e) {}
+    activeFirestoreUnsubscribe = null;
+  }
+  window.__activeListeningDocId = null;
+};
+
 window.startRealtimeCloudSync = function(username) {
   const activeUser = currentUser || username || "nani";
   const docId = activeUser.toLowerCase().trim();
+  const firestorePath = `users/${docId}`;
   initFirebaseSync();
   if (!cloudDb) return;
 
-  if (activeFirestoreUnsubscribe) {
-    try { activeFirestoreUnsubscribe(); } catch(e){}
+  if (window.__activeListeningDocId === docId && activeFirestoreUnsubscribe) {
+    console.log(`📡 [ThermaScan Realtime Sync] Already actively listening to ${firestorePath}`);
+    return;
   }
 
-  console.log("🔥 [ThermaScan Sync Diagnostic] Project ID:", window.thermascanFirebaseConfig.projectId);
-  console.log("🔒 [ThermaScan Sync Diagnostic] Auth User UID:", cloudAuth && cloudAuth.currentUser ? cloudAuth.currentUser.uid : "Anonymous");
-  console.log(`📡 [ThermaScan Sync Diagnostic] Listening to path: users/${docId}`);
+  if (typeof window.stopRealtimeCloudSync === 'function') {
+    window.stopRealtimeCloudSync();
+  }
 
-  activeFirestoreUnsubscribe = cloudDb.collection("users").doc(docId).onSnapshot((doc) => {
-    console.log(`⚡ [ThermaScan Sync Diagnostic] Snapshot received for users/${docId}! Exists: ${doc.exists}`);
+  window.__activeListeningDocId = docId;
+
+  console.log("🔥 [ThermaScan Realtime Sync] Firestore realtime listener started");
+  console.log(`📡 [ThermaScan Realtime Sync] Firestore path being listened to: ${firestorePath}`);
+
+  activeFirestoreUnsubscribe = cloudDb.collection("users").doc(docId).onSnapshot({ includeMetadataChanges: true }, (doc) => {
+    console.log(`⚡ [ThermaScan Realtime Sync] Firestore snapshot received for ${firestorePath}! HasPendingWrites: ${doc.metadata ? doc.metadata.hasPendingWrites : false}`);
     if (doc.exists) {
-      const data = doc.data();
-      console.log(`📊 [ThermaScan Sync Diagnostic] Document Data for users/${docId}:`, data);
-      let updated = false;
+      const data = doc.data() || {};
+      console.log(`📊 [ThermaScan Realtime Sync] Document Data for ${firestorePath}:`, data);
 
       // Extract medicine array or object from data.inventory, data.medicines, or data.meds
       let rawMeds = data.inventory || data.medicines || data.meds || null;
@@ -70,48 +87,52 @@ window.startRealtimeCloudSync = function(username) {
         medArray = Object.values(rawMeds);
       }
 
+      let totalRecords = medArray.length;
+      if (Array.isArray(data.vitalsLogs)) totalRecords += data.vitalsLogs.length;
+      if (data.waterIntake && typeof data.waterIntake === 'object') totalRecords += Object.keys(data.waterIntake).length;
+
+      console.log(`📈 [ThermaScan Realtime Sync] Number of documents/records received: ${totalRecords}`);
+
       if (medArray.length >= 0) {
         inventory = medArray.map(item => {
           if (!item.owner) item.owner = activeUser;
           return item;
         });
         localStorage.setItem('thermascan_inventory', JSON.stringify(inventory));
-        if (typeof renderInventory === 'function') renderInventory();
-        if (typeof updateDashboard === 'function') updateDashboard();
-        if (typeof renderAlertsCenter === 'function') renderAlertsCenter();
-        if (typeof renderRefillHub === 'function') renderRefillHub();
-        updated = true;
       }
 
       // 2. Sync Health Vitals Logs
-      if (data && Array.isArray(data.vitalsLogs)) {
+      if (Array.isArray(data.vitalsLogs)) {
         vitalsLogs = data.vitalsLogs.map(v => {
           if (!v.owner) v.owner = activeUser;
           return v;
         });
         localStorage.setItem('thermascan_vitals', JSON.stringify(vitalsLogs));
-        if (typeof renderVitals === 'function') renderVitals();
-        updated = true;
       }
 
       // 3. Sync Water Intake Tracking
-      if (data && data.waterIntake && typeof data.waterIntake === 'object') {
+      if (data.waterIntake && typeof data.waterIntake === 'object') {
         Object.keys(data.waterIntake).forEach(k => {
           localStorage.setItem(k, data.waterIntake[k]);
         });
-        if (typeof renderWaterIntake === 'function') renderWaterIntake();
-        updated = true;
       }
 
-      if (updated) {
-        console.log(`✅ [ThermaScan Sync Diagnostic] Live UI Auto-Updated for users/${docId}`);
-      }
+      // Instant UI re-render across all existing views
+      if (typeof updateDashboard === 'function') updateDashboard();
+      if (typeof renderInventory === 'function') renderInventory();
+      if (typeof renderAlertsCenter === 'function') renderAlertsCenter();
+      if (typeof renderVitals === 'function') renderVitals();
+      if (typeof renderRefillHub === 'function') renderRefillHub();
+      if (typeof loadWaterTracker === 'function') loadWaterTracker();
+
+      console.log(`✅ [ThermaScan Realtime Sync] Live UI auto-updated from Firestore snapshot for ${firestorePath}!`);
     } else {
-      console.log(`⚠️ Document users/${docId} does not exist yet. Initializing...`);
+      console.log(`📈 [ThermaScan Realtime Sync] Number of documents/records received: 0`);
+      console.log(`⚠️ Document ${firestorePath} does not exist yet. Initializing...`);
       window.syncToCloud();
     }
   }, (err) => {
-    console.error("🚨 [ThermaScan Sync Diagnostic Error] Firestore listener error:", err);
+    console.error("🚨 [ThermaScan Realtime Sync Error] Firestore realtime listener error:", err);
   });
 };
 
@@ -690,6 +711,9 @@ window.login = function(username, recordLog = true) {
 };
 
 btnLogout.addEventListener('click', () => {
+  if (typeof window.stopRealtimeCloudSync === 'function') {
+    window.stopRealtimeCloudSync();
+  }
   currentUser = null;
   localStorage.removeItem('thermascan_currentUser');
   showView('view-auth');
@@ -716,18 +740,24 @@ function showView(viewId) {
     mainHeader.style.display = 'none';
     backNav.style.display = 'none';
     if (btnLogout) btnLogout.style.display = 'none';
-  } else if (viewId === 'view-dashboard') {
-    mainHeader.style.display = 'flex';
-    backNav.style.display = 'none';
-    if (btnLogout) btnLogout.style.display = 'block';
-    updateDashboard();
-    if (currentUser && typeof window.startRealtimeCloudSync === 'function') {
-      window.startRealtimeCloudSync(currentUser);
+    if (typeof window.stopRealtimeCloudSync === 'function') {
+      window.stopRealtimeCloudSync();
     }
   } else {
     mainHeader.style.display = 'flex';
-    backNav.style.display = 'block';
+    if (viewId === 'view-dashboard') {
+      backNav.style.display = 'none';
+      updateDashboard();
+    } else {
+      backNav.style.display = 'block';
+    }
     if (btnLogout) btnLogout.style.display = 'block';
+
+    // Ensure Firestore realtime listener is attached whenever an existing authenticated screen loads
+    if (currentUser && typeof window.startRealtimeCloudSync === 'function') {
+      window.startRealtimeCloudSync(currentUser);
+    }
+
     if (viewId === 'view-settings') {
       loadWaterTracker();
     }
