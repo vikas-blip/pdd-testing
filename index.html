@@ -33,6 +33,26 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var r of regs) r.unregister();
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var n of names) caches.delete(n);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      var syncBtn = document.getElementById('btn-cloud-sync');
+      if (syncBtn) syncBtn.remove();
+      var btns = document.getElementsByTagName('button');
+      for (var i = btns.length - 1; i >= 0; i--) {
+        if (btns[i] && btns[i].textContent && btns[i].textContent.trim() === 'Sync') {
+          btns[i].remove();
+        }
+      }
+    });
     window.addEventListener('error', function(e) {
       var errEl = document.createElement('div');
       errEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;padding:20px;z-index:99999;font-family:monospace;white-space:pre-wrap;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.5);max-height:50vh;overflow-y:auto;';
