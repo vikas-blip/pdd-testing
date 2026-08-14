@@ -2076,6 +2076,13 @@ if (btnDashBmiCalc) {
   });
 }
 
+const btnRunBmi = document.getElementById('btn-run-bmi');
+if (btnRunBmi) {
+  btnRunBmi.addEventListener('click', () => {
+    if (typeof window.calculateBmi === 'function') window.calculateBmi();
+  });
+}
+
 const btnCloseBmi = document.getElementById('btn-close-bmi');
 const btnCloseBmiFooter = document.getElementById('btn-close-bmi-footer');
 if (btnCloseBmi) btnCloseBmi.addEventListener('click', () => {
