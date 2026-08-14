@@ -1478,6 +1478,8 @@ function getDaysToExpiry(dateStr) {
 }
 
 function renderAlertsCenter() {
+  const alertsCenterList = document.getElementById('alerts-center-list');
+  if (!alertsCenterList) return;
   alertsCenterList.innerHTML = '';
   const userInv = filterUserItems(inventory);
   let hasAlerts = false;

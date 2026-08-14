@@ -53,14 +53,6 @@
         }
       }
     });
-    window.addEventListener('error', function(e) {
-      var errEl = document.createElement('div');
-      errEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;padding:20px;z-index:99999;font-family:monospace;white-space:pre-wrap;font-size:14px;box-shadow:0 4px 15px rgba(0,0,0,0.5);max-height:50vh;overflow-y:auto;';
-      errEl.innerHTML = '<strong>🚨 [ThermaScan diagnostic error] 🚨</strong><br>' + 
-        e.message + '<br>File: ' + e.filename + '<br>Line: ' + e.lineno + ' | Col: ' + e.colno + 
-        '<br><br>Stack Trace:<br>' + (e.error ? e.error.stack : 'No stack trace');
-      document.body.appendChild(errEl);
-    });
   </script>
 </head>
 <body class="dark-theme">
@@ -730,7 +722,7 @@
     <!-- Alerts Container for Toast Notifications -->
     <div id="alerts-container"></div>
 
-    <script src="app.js?v=20260814_v70"></script>
+    <script src="app.js?v=20260814_v85"></script>
   </div>
 </body>
 </html>
