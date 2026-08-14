@@ -1682,16 +1682,36 @@ window.calculateBmi = function() {
   const weightEl = document.getElementById('bmi-weight-input');
   const resEl = document.getElementById('bmi-result');
   
-  const heightCm = parseFloat(heightEl ? heightEl.value : 0) || 0;
-  const weightKg = parseFloat(weightEl ? weightEl.value : 0) || 0;
+  const rawHeight = heightEl ? heightEl.value.trim() : '';
+  const rawWeight = weightEl ? weightEl.value.trim() : '';
   
-  if (heightCm <= 0 || weightKg <= 0) {
-    showToast("Please enter valid height and weight values.", "danger");
+  if (!rawHeight || !rawWeight) {
+    showToast("Please enter both height and weight values.", "danger");
+    return;
+  }
+  
+  // Strict numeric validation (disallow alphabetic characters/words)
+  if (!/^\d+(\.\d+)?$/.test(rawHeight) || !/^\d+(\.\d+)?$/.test(rawWeight)) {
+    showToast("Height and weight must contain numbers only.", "danger");
+    return;
+  }
+
+  const heightCm = parseFloat(rawHeight);
+  const weightKg = parseFloat(rawWeight);
+  
+  if (isNaN(heightCm) || isNaN(weightKg) || heightCm < 30 || heightCm > 300 || weightKg < 10 || weightKg > 500) {
+    showToast("Please enter valid height (30-300 cm) and weight (10-500 kg).", "danger");
     return;
   }
 
   const heightM = heightCm / 100;
-  const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+  const bmiVal = weightKg / (heightM * heightM);
+  if (isNaN(bmiVal) || !isFinite(bmiVal)) {
+    showToast("Invalid BMI calculation result.", "danger");
+    return;
+  }
+
+  const bmi = bmiVal.toFixed(1);
   
   let category = "Normal weight";
   let catColor = "var(--success)";
@@ -1753,15 +1773,59 @@ if (btnLogVitalsEl) {
 if(btnCloseVitals) {
   btnCloseVitals.addEventListener('click', window.closeVitalsModal);
 }
+// Enforce strict numeric input sanitization for Vitals and BMI modals
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (!t || !t.id) return;
+  if (t.id === 'bmi-height-input' || t.id === 'bmi-weight-input') {
+    t.value = t.value.replace(/[^0-9.]/g, '');
+  } else if (t.id === 'input-hr' || t.id === 'input-sugar') {
+    t.value = t.value.replace(/[^0-9]/g, '');
+  } else if (t.id === 'input-bp') {
+    t.value = t.value.replace(/[^0-9/]/g, '');
+  }
+});
+
 if(btnSubmitVitals) {
   btnSubmitVitals.addEventListener('click', () => {
-    const bp = inputBp.value.trim();
-    const hr = inputHr.value.trim();
-    const sugar = inputSugar.value.trim();
+    const bp = inputBp ? inputBp.value.trim() : '';
+    const hr = inputHr ? inputHr.value.trim() : '';
+    const sugar = inputSugar ? inputSugar.value.trim() : '';
     
     if (!bp && !hr && !sugar) {
       showToast("Please enter at least one vital sign.", "danger");
       return;
+    }
+
+    // Strict numeric and format validation
+    if (bp) {
+      const bpRegex = /^\d{2,3}\/\d{2,3}$/;
+      if (!bpRegex.test(bp)) {
+        showToast("Blood Pressure must be numeric in SYS/DIA format (e.g. 120/80). Words or letters are not allowed.", "danger");
+        return;
+      }
+    }
+    if (hr) {
+      if (!/^\d+$/.test(hr)) {
+        showToast("Heart Rate must be a valid number (e.g. 72). Words are not allowed.", "danger");
+        return;
+      }
+      const hrNum = parseInt(hr, 10);
+      if (hrNum < 30 || hrNum > 250) {
+        showToast("Heart Rate must be between 30 and 250 BPM.", "danger");
+        return;
+      }
+    }
+    if (sugar) {
+      if (!/^\d+$/.test(sugar)) {
+        showToast("Blood Sugar must be a valid number (e.g. 95). Words are not allowed.", "danger");
+        return;
+      }
+      const sugarNum = parseInt(sugar, 10);
+      if (sugarNum < 20 || sugarNum > 600) {
+        showToast("Blood Sugar must be between 20 and 600 mg/dL.", "danger");
+        return;
+      }
     }
     
     btnSubmitVitals.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
@@ -1778,14 +1842,17 @@ if(btnSubmitVitals) {
         sugar: sugar
       };
       
-      vitalsLogs.push(newVital);
+      vitalsLogs.unshift(newVital);
       saveVitals();
       renderVitals();
       
-      vitalsModal.style.display = 'none';
+      if (vitalsModal) vitalsModal.style.display = 'none';
+      if (inputBp) inputBp.value = '';
+      if (inputHr) inputHr.value = '';
+      if (inputSugar) inputSugar.value = '';
       showToast("Vitals successfully saved to Health Record.", "success");
       speakText("Vitals saved successfully.");
-    }, 800);
+    }, 500);
   });
 }
 // --- Daily Hydration & Water Intake Tracker ---

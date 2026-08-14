@@ -441,17 +441,17 @@
         
         <div class="input-group">
           <label>Blood Pressure (SYS/DIA)</label>
-          <input type="text" id="input-bp" placeholder="e.g. 120/80">
+          <input type="text" id="input-bp" placeholder="e.g. 120/80" inputmode="decimal" pattern="[0-9/]*">
         </div>
         
         <div class="input-group">
           <label>Heart Rate (BPM)</label>
-          <input type="number" id="input-hr" placeholder="e.g. 72">
+          <input type="number" id="input-hr" placeholder="e.g. 72" inputmode="numeric" pattern="[0-9]*" min="30" max="250">
         </div>
         
         <div class="input-group">
           <label>Blood Sugar (mg/dL)</label>
-          <input type="number" id="input-sugar" placeholder="e.g. 95">
+          <input type="number" id="input-sugar" placeholder="e.g. 95" inputmode="numeric" pattern="[0-9]*" min="20" max="600">
         </div>
         
         <div class="flex-row mt-4">
@@ -671,12 +671,12 @@
         
         <div class="input-group">
           <label>Height (in cm)</label>
-          <input type="number" id="bmi-height-input" placeholder="e.g. 170" value="170" min="50" max="250">
+          <input type="number" id="bmi-height-input" placeholder="e.g. 170" value="170" min="30" max="300" inputmode="decimal" pattern="[0-9.]*">
         </div>
 
         <div class="input-group">
           <label>Weight (in kg)</label>
-          <input type="number" id="bmi-weight-input" placeholder="e.g. 70" value="70" min="20" max="300">
+          <input type="number" id="bmi-weight-input" placeholder="e.g. 70" value="70" min="10" max="500" inputmode="decimal" pattern="[0-9.]*">
         </div>
 
         <button type="button" class="btn" id="btn-run-bmi" onclick="calculateBmi()" style="margin-bottom: 15px; background: linear-gradient(135deg, var(--success), #16a34a);">Calculate BMI Score</button>
