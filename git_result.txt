@@ -1,0 +1,5 @@
+CODE: 128
+OUT: 
+ERR: fatal: Cannot prompt because user interactivity has been disabled.
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+
