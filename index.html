@@ -671,12 +671,12 @@
         
         <div class="input-group">
           <label>Height (in cm)</label>
-          <input type="number" id="bmi-height-input" placeholder="e.g. 170" value="170" min="30" max="300" inputmode="decimal" pattern="[0-9.]*">
+          <input type="text" id="bmi-height-input" placeholder="e.g. 170" value="170" inputmode="decimal" pattern="[0-9.]*">
         </div>
 
         <div class="input-group">
           <label>Weight (in kg)</label>
-          <input type="number" id="bmi-weight-input" placeholder="e.g. 70" value="70" min="10" max="500" inputmode="decimal" pattern="[0-9.]*">
+          <input type="text" id="bmi-weight-input" placeholder="e.g. 70" value="70" inputmode="decimal" pattern="[0-9.]*">
         </div>
 
         <button type="button" class="btn" id="btn-run-bmi" onclick="calculateBmi()" style="margin-bottom: 15px; background: linear-gradient(135deg, var(--success), #16a34a);">Calculate BMI Score</button>

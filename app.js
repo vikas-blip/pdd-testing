@@ -1779,6 +1779,10 @@ document.addEventListener('input', (e) => {
   if (!t || !t.id) return;
   if (t.id === 'bmi-height-input' || t.id === 'bmi-weight-input') {
     t.value = t.value.replace(/[^0-9.]/g, '');
+    const parts = t.value.split('.');
+    if (parts.length > 2) {
+      t.value = parts[0] + '.' + parts.slice(1).join('');
+    }
   } else if (t.id === 'input-hr' || t.id === 'input-sugar') {
     t.value = t.value.replace(/[^0-9]/g, '');
   } else if (t.id === 'input-bp') {
@@ -1835,7 +1839,7 @@ if(btnSubmitVitals) {
       
       const newVital = {
         id: Date.now().toString(),
-        owner: currentUser,
+        owner: currentUser || "nani",
         date: new Date().toISOString(),
         bp: bp,
         hr: hr,
