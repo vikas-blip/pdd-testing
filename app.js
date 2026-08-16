@@ -136,13 +136,19 @@ window.startRealtimeCloudSync = function(username) {
   });
 };
 
+window.getTodayWaterKey = function() {
+  const activeUser = currentUser || "nani";
+  const todayStr = new Date().toISOString().split('T')[0];
+  return `thermascan_water_${activeUser}_${todayStr}`;
+};
+
 window.syncToCloud = function() {
   const activeUser = currentUser || "nani";
   const docId = activeUser.toLowerCase().trim();
   initFirebaseSync();
   if (!cloudDb) return;
 
-  const todayWaterKey = typeof getTodayWaterKey === 'function' ? getTodayWaterKey() : ('thermascan_water_' + new Date().toISOString().slice(0, 10));
+  const todayWaterKey = window.getTodayWaterKey();
   const waterMap = {};
   waterMap[todayWaterKey] = parseInt(localStorage.getItem(todayWaterKey)) || 0;
 
@@ -1647,10 +1653,13 @@ function renderVitals() {
   // Display only the latest 3
   userVitals.slice(0, 3).forEach(v => {
     const el = document.createElement('div');
-    el.style.cssText = 'background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--glass-border);';
+    el.style.cssText = 'background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--glass-border); position: relative;';
     el.innerHTML = `
-      <div style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 11px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); font-size: 11px;">
         <span>${new Date(v.date).toLocaleString()}</span>
+        <button class="btn-delete-vital" data-id="${v.id}" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 2px 6px; font-size: 12px;" title="Delete vital record">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
       </div>
       <div style="display: flex; gap: 10px; font-weight: 600;">
         ${v.bp ? `<span style="color:#ef4444;"><i class="fa-solid fa-droplet"></i> BP: ${v.bp}</span>` : ''}
@@ -1763,6 +1772,16 @@ document.addEventListener('click', (e) => {
   if (e.target && e.target.closest('#btn-log-vitals')) {
     window.openVitalsModal();
   }
+  const deleteVitalBtn = e.target && e.target.closest('.btn-delete-vital');
+  if (deleteVitalBtn) {
+    const vitalId = deleteVitalBtn.getAttribute('data-id');
+    if (vitalId) {
+      vitalsLogs = vitalsLogs.filter(v => v.id !== vitalId);
+      saveVitals();
+      renderVitals();
+      showToast("Vital record deleted.", "info");
+    }
+  }
 });
 
 const btnLogVitalsEl = document.getElementById('btn-log-vitals');
@@ -1868,17 +1887,17 @@ const btnAddWater250 = document.getElementById('btn-add-water-250');
 const btnAddWater500 = document.getElementById('btn-add-water-500');
 const btnResetWater = document.getElementById('btn-reset-water');
 
-function getTodayWaterKey() {
+window.getTodayWaterKey = function() {
+  const activeUser = currentUser || "nani";
   const todayStr = new Date().toISOString().split('T')[0];
-  return `thermascan_water_${currentUser}_${todayStr}`;
-}
+  return `thermascan_water_${activeUser}_${todayStr}`;
+};
 
-function loadWaterTracker() {
-  if (!currentUser) return;
-  const key = getTodayWaterKey();
+window.loadWaterTracker = function() {
+  const key = window.getTodayWaterKey();
   const currentMl = parseInt(localStorage.getItem(key)) || 0;
   renderWaterUI(currentMl);
-}
+};
 
 function renderWaterUI(ml) {
   const goalMl = 2000;
@@ -1899,12 +1918,15 @@ function renderWaterUI(ml) {
 }
 
 function addWaterIntake(amountMl) {
-  if (!currentUser) return;
-  const key = getTodayWaterKey();
+  const key = window.getTodayWaterKey();
   let currentMl = parseInt(localStorage.getItem(key)) || 0;
   currentMl += amountMl;
   localStorage.setItem(key, currentMl);
   renderWaterUI(currentMl);
+
+  if (typeof window.syncToCloud === 'function') {
+    window.syncToCloud();
+  }
 
   if (currentMl >= 2000 && (currentMl - amountMl) < 2000) {
     showToast("🎉 Daily Hydration Goal Accomplished! Great job staying healthy! 💧", "success");
@@ -1918,9 +1940,12 @@ if (btnAddWater250) btnAddWater250.addEventListener('click', () => addWaterIntak
 if (btnAddWater500) btnAddWater500.addEventListener('click', () => addWaterIntake(500));
 if (btnResetWater) {
   btnResetWater.addEventListener('click', () => {
-    if (!currentUser) return;
-    localStorage.setItem(getTodayWaterKey(), 0);
+    const key = window.getTodayWaterKey();
+    localStorage.setItem(key, 0);
     renderWaterUI(0);
+    if (typeof window.syncToCloud === 'function') {
+      window.syncToCloud();
+    }
     showToast("Today's water intake reset to 0 ml", "warning");
   });
 }
