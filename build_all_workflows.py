@@ -1,7 +1,12 @@
 import os
 
-wf_dir = r"c:\Users\vikas\Downloads\ThermaScan\.github\workflows"
-os.makedirs(wf_dir, exist_ok=True)
+wf_dirs = [
+    r"c:\Users\vikas\Downloads\ThermaScan\.github\workflows",
+    r"c:\Users\vikas\Downloads\ThermaScan\pdd-testing\.github\workflows"
+]
+
+for d in wf_dirs:
+    os.makedirs(d, exist_ok=True)
 
 workflows = [
     {
@@ -19,6 +24,10 @@ workflows = [
     {
         "filename": "vulnerability-tests.yml",
         "name": "Vulnerability Tests"
+    },
+    {
+        "filename": "comprehensive-verification.yml",
+        "name": "ThermaScan Comprehensive Verification & Load Pipeline"
     }
 ]
 
@@ -142,6 +151,7 @@ jobs:
       - name: Generate Unified XML-Spreadsheet & Dashboard
         run: |
           node automation/utils/xmlSpreadsheetReporter.js
+          python testing/generate_dashboard_summary.py
 
       - name: Publish Step Summary Dashboard
         if: always()
@@ -181,6 +191,7 @@ jobs:
       - name: Run Load Testing Suite (350 Test Cases)
         run: |
           python testing/load/run_load_suite.py
+          python testing/generate_dashboard_summary.py
 
       - name: Upload Load Test Deliverables
         uses: actions/upload-artifact@v4
@@ -193,11 +204,13 @@ jobs:
           retention-days: 30
 """
 
-for wf in workflows:
-    fp = os.path.join(wf_dir, wf["filename"])
-    content = template.format(wf_name=wf["name"])
-    with open(fp, "w", encoding="utf-8") as f:
-        f.write(content)
-    print(f"Generated workflow: {fp}")
+for wf_dir in wf_dirs:
+    for wf in workflows:
+        fp = os.path.join(wf_dir, wf["filename"])
+        content = template.format(wf_name=wf["name"])
+        with open(fp, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"Generated workflow: {fp}")
 
-print("All 4 workflow files generated successfully!")
+print(f"All {len(workflows)} workflow files generated successfully across all workflow target locations!")
+

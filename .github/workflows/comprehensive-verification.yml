@@ -1,4 +1,4 @@
-name: CI Tests
+name: ThermaScan Comprehensive Verification & Load Pipeline
 run-name: local e2e pipeline configuration
 
 on:

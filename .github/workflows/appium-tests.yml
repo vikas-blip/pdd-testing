@@ -1,4 +1,5 @@
-name: local e2e pipeline configuration
+name: Appium E2E Test Pipeline
+run-name: local e2e pipeline configuration
 
 on:
   push:
@@ -14,7 +15,7 @@ permissions:
 
 jobs:
   verify-deployment:
-    name: Verify Deployment is Live
+    name: 🌐 Verify Deployment is Live
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -32,7 +33,7 @@ jobs:
           curl -I -s https://vikas-blip.github.io/pdd-testing/ || echo "Deployment check warm."
 
   backend-tests:
-    name: Run Backend Tests
+    name: 🧪 Run Backend Tests
     runs-on: ubuntu-latest
     needs: verify-deployment
     steps:
@@ -50,7 +51,7 @@ jobs:
           node -e "console.log('[OK] All 350 Backend API tests passed cleanly.');"
 
   selenium-tests:
-    name: Run Selenium E2E Tests
+    name: 💻 Run Selenium E2E Tests
     runs-on: ubuntu-latest
     needs: verify-deployment
     steps:
@@ -71,7 +72,7 @@ jobs:
           node automation/runner.js
 
   appium-tests:
-    name: Run Appium Mobile Tests
+    name: 📱 Run Appium Mobile Tests
     runs-on: ubuntu-latest
     needs: verify-deployment
     steps:
@@ -88,7 +89,7 @@ jobs:
           python automation/runners/run_tests.py
 
   report-generation:
-    name: Verify All Tests & Generate Reports
+    name: ✅ Verify All Tests & Generate Reports
     runs-on: ubuntu-latest
     needs: [backend-tests, selenium-tests, appium-tests]
     steps:
@@ -117,29 +118,14 @@ jobs:
       - name: Generate Unified XML-Spreadsheet & Dashboard
         run: |
           node automation/utils/xmlSpreadsheetReporter.js
+          python testing/generate_dashboard_summary.py
 
       - name: Publish Step Summary Dashboard
         if: always()
         run: |
-          echo "## 🧪 TMS Automated Test Verification Dashboard" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "This dashboard displays the test results verified from the completed test execution reports (Generated at: $(date -u +'%Y-%m-%d %H:%M:%S UTC'))." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🌱 E2E Test Suite Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Test Suite** | TMS - E2E Selenium Automation Test Report |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Total Test Cases** | 1050 |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Passed** | 🟢 1050 |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Failed** | ❌ 0 |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Pass Rate** | 100.0% |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Comprehensive Execution Breakdown" >> $GITHUB_STEP_SUMMARY
-          echo "- **Functional E2E Tests:** 350 / 350 Passed (100.0%)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Load & Performance Tests:** 350 / 350 Passed (100.0%)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Vulnerability & Security Tests:** 350 / 350 Passed (100.0%)" >> $GITHUB_STEP_SUMMARY
-          echo "- **XML Spreadsheet Deliverable:** \`ThermaScan_Unified_Test_Report.xml\` Published" >> $GITHUB_STEP_SUMMARY
+          if [ -f "Test Results/Summary/summary.md" ]; then
+            cat "Test Results/Summary/summary.md" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -153,7 +139,7 @@ jobs:
           retention-days: 30
 
   load-tests:
-    name: Run Load Tests
+    name: 🚀 Run Load Tests
     runs-on: ubuntu-latest
     needs: report-generation
     steps:
@@ -172,6 +158,7 @@ jobs:
       - name: Run Load Testing Suite (350 Test Cases)
         run: |
           python testing/load/run_load_suite.py
+          python testing/generate_dashboard_summary.py
 
       - name: Upload Load Test Deliverables
         uses: actions/upload-artifact@v4

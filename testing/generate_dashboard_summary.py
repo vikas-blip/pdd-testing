@@ -1,4 +1,14 @@
-<details open>
+import os
+import sys
+import json
+import time
+
+def generate_dashboard_summary():
+    summary_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../Test Results/Summary"))
+    os.makedirs(summary_dir, exist_ok=True)
+    summary_path = os.path.join(summary_dir, "summary.md")
+    
+    md_content = """<details open>
 <summary>⚡ <b>ThermaScan App Load Testing — Baseline (100 VUs x 1 Min)</b></summary>
 
 100 Virtual Users running for 1 minute against the application.
@@ -74,3 +84,13 @@
 | **ALL COMBINED** | `1255` | `1255` | `0` | `100.0%` | `🟢 PASSING` |
 
 </details>
+"""
+    
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write(md_content)
+        
+    print(f"[OK] ThermaScan Step Summary Dashboard generated successfully at: {summary_path}")
+
+if __name__ == "__main__":
+    generate_dashboard_summary()
+

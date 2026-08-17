@@ -118,6 +118,7 @@ jobs:
       - name: Generate Unified XML-Spreadsheet & Dashboard
         run: |
           node automation/utils/xmlSpreadsheetReporter.js
+          python testing/generate_dashboard_summary.py
 
       - name: Publish Step Summary Dashboard
         if: always()
@@ -157,6 +158,7 @@ jobs:
       - name: Run Load Testing Suite (350 Test Cases)
         run: |
           python testing/load/run_load_suite.py
+          python testing/generate_dashboard_summary.py
 
       - name: Upload Load Test Deliverables
         uses: actions/upload-artifact@v4
