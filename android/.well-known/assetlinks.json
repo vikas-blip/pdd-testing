@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.vikas_blip.twa",
+    "sha256_cert_fingerprints": ["77:30:0E:53:43:8D:3E:E3:0E:0D:0F:8E:B0:EE:D7:E8:58:49:A0:32:54:25:FC:78:FB:38:13:CE:3D:06:23:75"]
+  }
+}]
